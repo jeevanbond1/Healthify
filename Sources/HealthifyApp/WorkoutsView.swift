@@ -41,12 +41,7 @@ struct WorkoutsView: View {
                         }
                         if let prev = WorkoutStats.previousSession(
                             routineId: routine.id, before: Date(), in: store.sessions) {
-                            Text("Last time \(prev.day): " + routine.items.compactMap { item in
-                                guard let p = WorkoutStats.lastPerformance(
-                                    exerciseId: item.exerciseId, before: Date(),
-                                    in: store.sessions) else { return nil }
-                                return "\(exerciseMap[item.exerciseId]?.name ?? "") \(fmt(p.weightKg, 0)) kg × \(fmt(p.reps, 0))"
-                            }.joined(separator: " · "))
+                            Text(lastTimeText(prev: prev, routine: routine))
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         Button("Start today's workout") {
@@ -141,6 +136,17 @@ struct WorkoutsView: View {
             parts.append("last: \(fmt(p.weightKg, 0)) kg × \(fmt(p.reps, 0)) → try \(fmt(next, 1)) kg")
         }
         return parts.joined(separator: " · ")
+    }
+
+    private func lastTimeText(prev: WorkoutSession, routine: Routine) -> String {
+        let parts: [String] = routine.items.compactMap { item in
+            guard let p = WorkoutStats.lastPerformance(
+                exerciseId: item.exerciseId, before: Date(),
+                in: store.sessions) else { return nil }
+            let name = exerciseMap[item.exerciseId]?.name ?? ""
+            return "\(name) \(fmt(p.weightKg, 0)) kg × \(fmt(p.reps, 0))"
+        }
+        return "Last time \(prev.day): " + parts.joined(separator: " · ")
     }
 
     private var weekStrip: some View {

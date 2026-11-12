@@ -41,7 +41,7 @@ struct HealthScaleHelpView: View {
 
     private func labeledStep(_ n: Int, _ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Text("\(n)").font(.headline).foregroundStyle(.accent)
+            Text("\(n)").font(.headline).foregroundStyle(Color.accentColor)
                 .frame(width: 20)
             Text(text).font(.subheadline)
         }

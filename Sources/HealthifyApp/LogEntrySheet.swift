@@ -7,19 +7,19 @@ struct LogEntrySheet: View {
     @EnvironmentObject var store: UserStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    var pick: FoodPick
+    @State var pick: FoodPick
     var meal: Meal
     var day: String
 
     init(pick: FoodPick, day: String, meal: Meal = .snacks) {
-        self.pick = pick
+        _pick = State(initialValue: pick)
         self.day = day
         self.meal = meal
     }
 
     init(meal: Meal, day: String) {
         // Diary "Log" entry point: search defaults to the full list.
-        self.pick = .food(seedFoods[0])
+        _pick = State(initialValue: .food(seedFoods[0]))
         self.day = day
         self.meal = meal
         _searchFirst = State(initialValue: true)

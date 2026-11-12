@@ -157,10 +157,10 @@ struct SettingsView: View {
             .sheet(isPresented: $showGoalEdit) { GoalEditSheet() }
             .fileExporter(isPresented: $showExport, document: exportDoc,
                           contentType: exportType,
-                          defaultFileName: exportName) { _ in }
+                          defaultFilename: exportName) { _ in }
             .fileExporter(isPresented: $showCSV, document: exportDoc,
                           contentType: exportType,
-                          defaultFileName: exportName) { _ in }
+                          defaultFilename: exportName) { _ in }
             .fileImporter(isPresented: $showImport,
                           allowedContentTypes: [.json]) { result in
                 handleImport(result)

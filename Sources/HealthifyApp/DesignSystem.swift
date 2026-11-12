@@ -35,7 +35,7 @@ enum Motion {
 
 struct PressableStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.body
+        configuration.label
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(.uiQuick, value: configuration.isPressed)

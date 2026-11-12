@@ -274,15 +274,15 @@ public final class HealthKitSyncService: ObservableObject {
     public func startObservers(onUpdate: @escaping () -> Void) {
         stopObservers()
         for kind in HealthDataKind.allCases where isKindEnabled(kind) {
-            let type: HKObjectType? = kind == .workout
+            let type: HKSampleType? = kind == .workout
                 ? HKObjectType.workoutType()
                 : HKObjectType.quantityType(
                     forIdentifier: HKQuantityTypeIdentifier(rawValue: kind.hkIdentifier))
             guard let type else { continue }
             let q = HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
+                defer { completion() }
                 guard error == nil else { return }
                 onUpdate()
-                completion?()
             }
             store.execute(q)
             observers.append(q)
