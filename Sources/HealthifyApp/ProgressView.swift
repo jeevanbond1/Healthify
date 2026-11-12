@@ -105,6 +105,7 @@ struct ProgressView: View {
                 }
                 .padding()
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Progress")
         }
     }

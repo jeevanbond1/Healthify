@@ -79,6 +79,7 @@ struct RecipeBuilderView: View {
                     LabeledContent("Fat", value: "\(fmt(perServing.fatG, 1)) g")
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("New recipe")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -165,6 +166,7 @@ struct IngredientPickerView: View {
                     }
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Add ingredient")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

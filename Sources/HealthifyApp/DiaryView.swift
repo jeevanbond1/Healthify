@@ -81,6 +81,7 @@ struct DiaryView: View {
                 }
                 .padding()
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Daily log")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -254,6 +255,7 @@ struct EditEntrySheet: View {
                     }
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Edit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

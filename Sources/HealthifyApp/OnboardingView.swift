@@ -56,12 +56,16 @@ struct OnboardingView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 HStack(spacing: 12) {
                     if step > 0 {
-                        Button("Back") { withAnimation(.uiSpring) { step -= 1 } }
-                            .buttonStyle(.bordered)
+                        Button("Back") {
+                            AppKeyboard.dismiss()
+                            withAnimation(.uiSpring) { step -= 1 }
+                        }
+                        .buttonStyle(.bordered)
                     }
                     Spacer()
                     if step < 3 {
                         Button("Continue") {
+                            AppKeyboard.dismiss()
                             Haptics.tap()
                             withAnimation(.uiSpring) { step += 1 }
                         }
@@ -72,6 +76,7 @@ struct OnboardingView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Welcome")
             .navigationBarTitleDisplayMode(.inline)
         }

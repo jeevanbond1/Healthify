@@ -138,6 +138,7 @@ struct FoodsView: View {
                 } header: { Text("My recipes") }
             }
             .searchable(text: $query, prompt: "Search foods")
+            .keyboardDoneToolbar()
             .navigationTitle("Foods")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {

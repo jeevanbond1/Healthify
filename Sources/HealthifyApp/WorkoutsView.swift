@@ -101,6 +101,7 @@ struct WorkoutsView: View {
                     }
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Workouts")
                 // Completion feedback lives in the session's own summary
                 // sheet (presented before dismissal), never stacked on
@@ -334,6 +335,7 @@ struct LiveSessionView: View {
                     Button("Add exercise") { showPicker = true }
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle(customName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

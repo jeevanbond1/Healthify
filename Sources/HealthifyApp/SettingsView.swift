@@ -153,6 +153,7 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Settings")
             .sheet(isPresented: $showGoalEdit) { GoalEditSheet() }
             .fileExporter(isPresented: $showExport, document: exportDoc,
@@ -322,6 +323,7 @@ struct GoalEditSheet: View {
                                    value: "\(GoalEngine.estimatedDays(currentKg: draft.weightKg, targetKg: draft.targetWeightKg, weeklyKg: draft.weeklyKg)) days")
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("Edit goals")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

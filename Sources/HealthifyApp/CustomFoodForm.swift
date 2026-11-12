@@ -57,6 +57,7 @@ struct CustomFoodForm: View {
                     }
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle("New food")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -122,6 +122,7 @@ struct LogEntrySheet: View {
                     LabeledContent("Fat", value: "\(fmt(nutrients.fatG, 1)) g")
                 }
             }
+            .keyboardDoneToolbar()
             .navigationTitle(pickTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

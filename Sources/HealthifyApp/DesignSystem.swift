@@ -42,6 +42,27 @@ struct PressableStyle: ButtonStyle {
     }
 }
 
+/// Number pads have no Return key, so every entry screen gets an
+/// explicit Done button in the keyboard toolbar.
+enum AppKeyboard {
+    static func dismiss() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+extension View {
+    func keyboardDoneToolbar() -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { AppKeyboard.dismiss() }
+            }
+        }
+        .scrollDismissesKeyboard(.interactively)
+    }
+}
+
 // MARK: - Haptics (fire on the causal frame, only where earned)
 
 enum Haptics {
