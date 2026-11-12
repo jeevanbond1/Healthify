@@ -79,7 +79,7 @@ struct SettingsView: View {
                         }
                         .disabled(health.status == .syncing)
                         if let last = health.lastSync {
-                            Text("Last synced \(last.formatted(date: .abbreviated, time: .short))")
+                            Text("Last synced \(last.formatted(date: .abbreviated, time: .shortened))")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         if let rep = health.lastReport {
@@ -230,7 +230,7 @@ struct SettingsView: View {
         guard let p = pendingBackup else { return "" }
         let bits = p.counts.sorted { $0.key < $1.key }
             .map { "\($0.key): \($0.value)" }.joined(separator: ", ")
-        return "Backup from \(p.exportedAt.formatted(date: .abbreviated, time: .short)). \(bits)"
+        return "Backup from \(p.exportedAt.formatted(date: .abbreviated, time: .shortened)). \(bits)"
     }
 
     private func handleImport(_ result: Result<URL, Error>) {

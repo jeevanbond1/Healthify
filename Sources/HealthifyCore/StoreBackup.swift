@@ -21,18 +21,13 @@ extension UserStore {
     }
 
     private func apply(_ b: BackupBody, onboarded: Bool = true) {
-        customFoods = b.customFoods
-        recipes = b.recipes
-        diary = b.diary
-        water = b.water
-        weight = b.weight
-        routines = b.routines
-        weekPlan = b.weekPlan
-        sessions = b.sessions
-        customExercises = b.customExercises
-        if let g = b.goal { goal = g }
-        settings = b.settings
-        self.onboarded = onboarded
+        restore(UserDocument(customFoods: b.customFoods, recipes: b.recipes,
+                             diary: b.diary, water: b.water, weight: b.weight,
+                             routines: b.routines, weekPlan: b.weekPlan,
+                             sessions: b.sessions,
+                             customExercises: b.customExercises,
+                             goal: b.goal ?? goal, settings: b.settings,
+                             onboarded: onboarded))
     }
 
     /// Encode the full backup file. Pure until the write the caller does.
@@ -53,7 +48,7 @@ extension UserStore {
             apply(file.body)
             save()
             return ["Replaced all data with backup from "
-                + file.exportedAt.formatted(date: .abbreviated, time: .short) + "."]
+                + file.exportedAt.formatted(date: .abbreviated, time: .shortened) + "."]
         case .merge:
             let (merged, report) = BackupCodec.merge(current: body(),
                                                      incoming: file.body)

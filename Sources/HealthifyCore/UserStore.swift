@@ -52,7 +52,7 @@ public final class UserStore: ObservableObject {
                      goal: goal, settings: settings, onboarded: onboarded)
     }
 
-    private func restore(_ doc: UserDocument) {
+    func restore(_ doc: UserDocument) {
         customFoods = doc.customFoods
         recipes = doc.recipes
         diary = doc.diary
