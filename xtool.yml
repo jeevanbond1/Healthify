@@ -1,0 +1,5 @@
+version: 1
+bundleID: com.healthify.app
+product: Healthify
+infoPath: Healthify-Info.plist
+entitlementsPath: Healthify.entitlements

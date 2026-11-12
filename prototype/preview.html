@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Healthify — interactive mockup (not the real app)</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: #e9e9ee; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #111;
+         display: flex; justify-content: center; padding: 16px; }
+  .phone { width: 390px; height: 844px; background: #f2f2f7; border-radius: 48px; overflow: hidden;
+           position: relative; box-shadow: 0 24px 80px rgba(0,0,0,.35); border: 10px solid #111; display: flex; flex-direction: column; }
+  .statusbar { height: 44px; display: flex; align-items: flex-end; justify-content: center;
+               font-size: 13px; font-weight: 600; padding-bottom: 6px; background: #f2f2f7; }
+  .screen { flex: 1; overflow-y: auto; padding: 8px 16px 16px; }
+  .screen h1 { font-size: 30px; margin: 4px 0 12px; letter-spacing: -0.5px; }
+  .card { background: rgba(255,255,255,.85); backdrop-filter: blur(20px); border-radius: 20px;
+          padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .card h3 { margin: 0 0 8px; font-size: 16px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .grow { flex: 1; }
+  .muted { color: #8e8e93; font-size: 13px; }
+  .small { font-size: 13px; }
+  button { font-family: inherit; }
+  .btn { background: #007aff; color: #fff; border: 0; border-radius: 12px; padding: 10px 14px;
+         font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .12s ease, opacity .12s ease; }
+  .btn:active { transform: scale(.97); opacity: .85; }
+  .btn.ghost { background: #e5e5ea; color: #007aff; }
+  .btn.danger { background: #ff3b30; }
+  .iconbtn { background: none; border: 0; color: #007aff; font-size: 22px; cursor: pointer; padding: 4px; transition: transform .12s ease; }
+  .iconbtn:active { transform: scale(.9); }
+  input, select { font-family: inherit; font-size: 15px; padding: 9px 10px; border-radius: 10px;
+                  border: 1px solid #d1d1d6; background: #fff; width: 100%; }
+  .fieldrow { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .fieldrow label { width: 110px; font-size: 14px; }
+  .tabbar { display: flex; background: rgba(250,250,252,.85); backdrop-filter: blur(20px);
+            border-top: 1px solid #d1d1d6; padding: 8px 4px 20px; }
+  .tab { flex: 1; background: none; border: 0; color: #8e8e93; font-size: 10px; cursor: pointer;
+         display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tab .ticon { font-size: 22px; }
+  .tab.active { color: #007aff; }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .badge.verified { background: #e5f6ec; color: #1a7f4b; }
+  .badge.estimate { background: #fff3e2; color: #b36b00; }
+  .bar { height: 6px; background: #e5e5ea; border-radius: 4px; overflow: hidden; }
+  .bar > div { height: 100%; background: #007aff; border-radius: 4px; transition: width .35s cubic-bezier(.2,.8,.2,1); }
+  .sheet { position: absolute; inset: auto 0 0 0; max-height: 88%; background: #f2f2f7;
+           border-radius: 20px 20px 0 0; padding: 8px 16px 28px; overflow-y: auto;
+           box-shadow: 0 -8px 30px rgba(0,0,0,.2); transform: translateY(105%); transition: transform .32s cubic-bezier(.2,.9,.25,1); z-index: 5; }
+  .sheet.open { transform: translateY(0); }
+  .grabber { width: 40px; height: 5px; background: #c7c7cc; border-radius: 3px; margin: 6px auto 10px; }
+  .foodrow { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: 1px solid #e5e5ea; cursor: pointer; }
+  .foodrow:active { opacity: .6; }
+  .banner { background: #fff8e6; border: 1px solid #f0d48a; color: #7a5b00; font-size: 13px;
+            border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+  .daybar { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .daybar .col { width: 100%; background: #e5e5ea; border-radius: 5px; height: 90px; position: relative; overflow: hidden; }
+  .daybar .fill { position: absolute; bottom: 0; width: 100%; background: #007aff; transition: height .4s ease; }
+  .hidden { display: none !important; }
+  .pr { color: #b8860b; font-weight: 600; }
+  .tab .ticon svg { width: 23px; height: 23px; display: block; }
+  .kv { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #e5e5ea; font-size: 14px; }
+  .kv:last-child { border-bottom: 0; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar">9:41&nbsp;&nbsp;Healthify mockup</div>
+  <div class="screen" id="screen"></div>
+  <div class="tabbar" id="tabbar"></div>
+  <div class="sheet" id="sheet"><div class="grabber"></div><div id="sheetBody"></div></div>
+</div>
+<script>
+"use strict";
+/* Real seed values (per 100 g + serving), same as the app's SeedFoods. */
+const FOODS = [
+  {id:"rice", name:"Cooked white rice", kcal:130, p:2.7, c:28, f:0.3, serving:150, servingLabel:"1 cup (150 g)", src:"USDA", v:true, tags:["indian"]},
+  {id:"roti", name:"Whole wheat roti", kcal:265, p:7.5, c:55, f:1.5, serving:40, servingLabel:"1 roti (40 g)", src:"Curated", v:false, tags:["indian"]},
+  {id:"dal", name:"Toor dal tadka (cooked)", kcal:120, p:7, c:18, f:2.5, serving:150, servingLabel:"1 katori (150 g)", src:"Curated", v:false, tags:["indian"]},
+  {id:"curd", name:"Curd, plain", kcal:60, p:3.3, c:4.7, f:3.3, serving:100, servingLabel:"1 katori (100 g)", src:"USDA", v:true, tags:["indian"]},
+  {id:"chicken", name:"Chicken curry, home-style", kcal:140, p:12, c:6, f:7, serving:150, servingLabel:"1 serving (150 g)", src:"Curated", v:false, tags:["indian"]},
+  {id:"egg", name:"Egg, boiled", kcal:155, p:13, c:1.1, f:11, serving:50, servingLabel:"1 egg (50 g)", src:"USDA", v:true, tags:[]},
+  {id:"banana", name:"Banana", kcal:89, p:1.1, c:23, f:0.3, serving:120, servingLabel:"1 medium (120 g)", src:"USDA", v:true, tags:[]},
+  {id:"milk", name:"Milk, toned", kcal:58, p:3.2, c:4.8, f:3, serving:250, servingLabel:"1 glass (250 ml)", src:"USDA", v:true, tags:[]},
+  {id:"oats", name:"Oats, dry", kcal:389, p:17, c:66, f:7, serving:40, servingLabel:"1 serving (40 g)", src:"USDA", v:true, tags:[]},
+  {id:"dosa", name:"Masala dosa", kcal:170, p:4, c:32, f:5, serving:120, servingLabel:"1 dosa (120 g)", src:"Curated", v:false, tags:["indian"]}
+];
+const ROUTINES = [
+  {name:"Full body A", muscle:"Legs + Chest + Back", items:[["Squat",3],["Bench press",3],["Barbell row",3]]},
+  {name:"Full body B", muscle:"Back + Shoulders + Arms", items:[["Deadlift",3],["Overhead press",3],["Pull-up",3]]},
+  {name:"Push", muscle:"Chest + Shoulders + Arms", items:[["Bench press",4],["Overhead press",3],["Lateral raise",3],["Skull crusher",3]]},
+  {name:"Pull", muscle:"Back + Arms", items:[["Deadlift",3],["Lat pulldown",3],["Seated cable row",3],["Biceps curl",3]]},
+  {name:"Legs", muscle:"Legs", items:[["Squat",4],["Romanian deadlift",3],["Leg press",3],["Calf raise",4]]},
+  {name:"Cardio + core", muscle:"Cardio + Core", items:[["Running",1],["Plank",3],["Cable crunch",3]]}
+];
+const MORE_FOODS = [
+  {id:"salmon", name:"Salmon, cooked", kcal:208, p:20, c:0, f:13, serving:100, servingLabel:"1 fillet (100 g)", src:"USDA", v:true, tags:["protein"]},
+  {id:"tofu", name:"Tofu, firm", kcal:76, p:8, c:1.9, f:4.8, serving:100, servingLabel:"1 serving (100 g)", src:"USDA", v:true, tags:["protein"]},
+  {id:"lentils", name:"Lentils, cooked", kcal:116, p:9, c:20, f:0.4, serving:150, servingLabel:"1 katori (150 g)", src:"USDA", v:true, tags:["protein"]},
+  {id:"chickpeas", name:"Chickpeas, cooked", kcal:164, p:9, c:27, f:2.6, serving:150, servingLabel:"1 katori (150 g)", src:"USDA", v:true, tags:["protein"]},
+  {id:"bread", name:"Whole wheat bread", kcal:247, p:13, c:41, f:3.4, serving:30, servingLabel:"1 slice (30 g)", src:"USDA", v:true, tags:[]},
+  {id:"pasta", name:"Pasta, cooked", kcal:131, p:5, c:25, f:1.1, serving:150, servingLabel:"1 cup (150 g)", src:"USDA", v:true, tags:[]},
+  {id:"avocado", name:"Avocado", kcal:160, p:2, c:9, f:15, serving:150, servingLabel:"1 fruit (150 g)", src:"USDA", v:true, tags:["fruit"]},
+  {id:"almonds", name:"Almonds", kcal:579, p:21, c:22, f:50, serving:30, servingLabel:"Small handful (30 g)", src:"USDA", v:true, tags:["snack"]},
+  {id:"yogurt", name:"Greek yogurt, plain", kcal:97, p:9, c:3.6, f:5, serving:150, servingLabel:"1 cup (150 g)", src:"USDA", v:true, tags:["protein"]},
+  {id:"quinoa", name:"Quinoa, cooked", kcal:120, p:4.4, c:21, f:1.9, serving:150, servingLabel:"1 cup (150 g)", src:"USDA", v:true, tags:[]}
+];
+FOODS.push(...MORE_FOODS);
+FOODS.push(
+  {id:"toordal-raw", name:"Toor dal, raw", kcal:343, p:22, c:63, f:1.5, serving:50, servingLabel:"1 serving dry (50 g)", src:"USDA", v:true, tags:["raw"]},
+  {id:"moong-raw", name:"Moong dal, raw", kcal:347, p:24, c:63, f:1.2, serving:50, servingLabel:"1 serving dry (50 g)", src:"USDA", v:true, tags:["raw"]},
+  {id:"atta", name:"Atta (whole wheat flour)", kcal:341, p:12, c:72, f:1.7, serving:100, servingLabel:"1 cup (100 g)", src:"USDA", v:true, tags:["raw"]},
+  {id:"besan", name:"Besan (gram flour)", kcal:387, p:22, c:58, f:6.7, serving:100, servingLabel:"1 cup (100 g)", src:"USDA", v:true, tags:["raw"]},
+  {id:"onion", name:"Onion, raw", kcal:40, p:1.1, c:9.3, f:0.1, serving:100, servingLabel:"1 medium (110 g)", src:"USDA", v:true, tags:["raw"]},
+  {id:"tomato", name:"Tomato, raw", kcal:18, p:0.9, c:3, f:0.2, serving:100, servingLabel:"1 medium (120 g)", src:"USDA", v:true, tags:["raw"]},
+  {id:"guava", name:"Guava, raw", kcal:68, p:2.6, c:14, f:1, serving:100, servingLabel:"1 fruit (90 g)", src:"USDA", v:true, tags:["fruit"]},
+  {id:"ghee", name:"Ghee", kcal:900, p:0, c:0, f:100, serving:10, servingLabel:"1 tsp (5 g)", src:"USDA", v:true, tags:["fats"]},
+  {id:"dalrice-recipe", name:"Dal rice bowl (recipe)", kcal:125, p:4.9, c:23, f:1.4, serving:300, servingLabel:"1 bowl (300 g)", src:"Starter recipe", v:false, tags:["recipe"]},
+  {id:"oatsbowl-recipe", name:"Oats banana bowl (recipe)", kcal:118, p:4.2, c:20, f:2.2, serving:360, servingLabel:"1 bowl (360 g)", src:"Starter recipe", v:false, tags:["recipe"]}
+);
+let state = null;
+function freshState(){ return {name:"", weightKg:65, targetWeightKg:60, weeklyKg:0.5, sex:"female", age:30, heightCm:165, activity:"moderate", goal:{kcal:2000,p:125,c:225,f:67}, entries:[], water:0, sessions:[], customs:[], recipes:[], weekPlan:{1:2,2:3,3:4,5:2,6:5}, onboarded:false}; }
+function estDays(s){ const d=Math.abs(s.weightKg-s.targetWeightKg); return d<=0.5?0:Math.ceil(d/Math.min(Math.max(s.weeklyKg,0.25),1)*7); }
+function allRecipes(){ return state.recipes||[]; }
+const ACT_MULT = {sedentary:1.2, light:1.375, moderate:1.55, active:1.725, veryActive:1.9};
+function computeGoal(s){
+  const base = 10*s.weightKg + 6.25*s.heightCm - 5*s.age + (s.sex==="male"?5:-161);
+  const tdee = base * ACT_MULT[s.activity];
+  const dir = s.targetWeightKg < s.weightKg-0.5 ? "lose" : s.targetWeightKg > s.weightKg+0.5 ? "gain" : "maintain";
+  const delta = Math.min(7700*s.weeklyKg/7, 750);
+  let kcal = dir==="lose" ? tdee-delta : dir==="gain" ? tdee+delta : tdee;
+  if(dir==="lose") kcal = Math.max(kcal, s.sex==="male"?1500:1200);
+  kcal = Math.round(kcal);
+  return {kcal:kcal, p:Math.round(kcal*0.25/4), c:Math.round(kcal*0.45/4), f:Math.round(kcal*0.30/9), dir:dir, tdee:Math.round(tdee)};
+}
+function allFoods(){ return FOODS.concat(state.customs).concat(state.recipes||[]); }
+function totals(){ return state.entries.reduce((a,e)=>({kcal:a.kcal+e.kcal,p:a.p+e.p,c:a.c+e.c,f:a.f+e.f}),{kcal:0,p:0,c:0,f:0}); }
+function fmt(n,d){ return Number(n).toFixed(d===undefined?0:d); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+const IC = {
+  house:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>',
+  mag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20"/></svg>',
+  db:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 7v10M17 7v10M4 9.5v5M20 9.5v5M7 12h10"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16"/><path d="M7 20v-6M12 20V7M17 20v-9"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 4v2.5M12 17.5V20M4 12h2.5M17.5 12H20M6.3 6.3l1.8 1.8M15.9 15.9l1.8 1.8M17.7 6.3l-1.8 1.8M8.1 15.9l-1.8 1.8"/></svg>'
+};
+const TABS = [["home","Home","house"],["diary","Diary","book"],["foods","Foods","mag"],["workouts","Workouts","db"],["settings","Settings","gear"]];
+let tab = "home";
+function go(t){ tab = t; render(); document.getElementById("screen").scrollTop = 0; }
+function renderTabs(){
+  document.getElementById("tabbar").innerHTML = TABS.map(([k,label,ic])=>
+    `<button class="tab${k===tab?" active":""}" onclick="go('${k}')"><span class="ticon">${IC[ic]}</span>${label}</button>`).join("");
+}
+function openSheet(html){ const s=document.getElementById("sheet"); document.getElementById("sheetBody").innerHTML=html; s.classList.add("open"); }
+function closeSheet(){ document.getElementById("sheet").classList.remove("open"); }
+function badge(f){ return f.v?'<span class="badge verified">Verified</span>':'<span class="badge estimate">Estimate</span>'; }
+/* ---------- Home ---------- */
+function todayBurn(){
+  let w=0,c=0;
+  state.sessions.forEach(s=>{ w+=s.burnW||0; c+=s.burnC||0; });
+  return {w:w,c:c,total:w+c};
+}
+function vHome(){
+  const t=totals(), g=state.goal, b=todayBurn(), rem=g.kcal-t.kcal;
+  let h=`<h1>${state.name?("Hi, "+esc(state.name)):"Today"}</h1>`;
+  h+=`<div class="card"><div class="muted">Today target</div><div style="font-size:40px;font-weight:800;letter-spacing:-1px">${fmt(g.kcal)} kcal</div>
+    <div class="row" style="margin-top:8px"><div class="grow"><div class="muted">Actual</div><div style="font-size:20px;font-weight:700">${fmt(t.kcal)} kcal</div></div>
+    <div class="grow"><div class="muted">Remaining</div><div style="font-size:20px;font-weight:700">${fmt(rem)} kcal</div></div></div>
+    <div class="muted small" style="margin-top:6px">Target + burn - eaten = ${fmt(g.kcal+b.total-t.kcal)} kcal (burn estimated)</div></div>`;
+  h+=`<div class="card"><h3>Burned today</h3><div class="row"><div class="grow"><div class="muted">Workout</div><div style="font-size:20px;font-weight:700">${fmt(b.w)} kcal</div></div>
+    <div class="grow"><div class="muted">Cardio</div><div style="font-size:20px;font-weight:700">${fmt(b.c)} kcal</div></div></div>
+    <div class="muted small" style="margin-top:6px">Estimated from duration and your weight. Apple Health workouts use recorded energy.</div>
+    <button class="btn ghost" style="margin-top:8px" onclick="state.sessions.push({name:'Running (cardio)',vol:0,sets:0,burnC:Math.round(8*state.weightKg*0.5),burnW:0,when:Date.now()});render()">+ Log 30 min run (est.)</button></div>`;
+  h+=`<div class="card"><button class="btn ghost" style="width:100%" onclick="go('progress')">Progress: weight, records, 7 days</button></div>`;
+  return h;
+}
+/* ---------- Diary ---------- */
+function ringSVG(eaten,target){
+  const C=2*Math.PI*54, p=Math.min(eaten/Math.max(target,1),1);
+  return `<svg width="140" height="140" viewBox="0 0 140 140">
+    <circle cx="70" cy="70" r="54" fill="none" stroke="#e5e5ea" stroke-width="12"/>
+    <circle cx="70" cy="70" r="54" fill="none" stroke="#007aff" stroke-width="12" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}" transform="rotate(-90 70 70)" style="transition:stroke-dashoffset .4s ease"/>
+    <text x="70" y="68" text-anchor="middle" font-size="22" font-weight="700">${fmt(eaten)}</text>
+    <text x="70" y="86" text-anchor="middle" font-size="11" fill="#8e8e93">of ${fmt(target)} kcal</text></svg>`;
+}
+function macroBar(label,g,t){ return `<div style="margin:8px 0"><div class="row small"><span class="muted">${label}</span><span class="grow"></span><span>${fmt(g,1)} / ${fmt(t)}g</span></div><div class="bar"><div style="width:${Math.min(g/Math.max(t,1),1)*100}%"></div></div></div>`; }
+const MEALS = ["Breakfast","Lunch","Dinner","Snacks"];
+let diaryOffset = 0;
+function vDiary(){
+  const t=diaryOffset===0?totals():{kcal:0,p:0,c:0,f:0}, g=state.goal;
+  const dlabel = diaryOffset===0 ? "Today" : new Date(Date.now()+diaryOffset*86400000).toISOString().slice(0,10);
+  let h=`<h1>Daily log</h1><div class="row" style="margin-bottom:10px"><button class="btn ghost" onclick="diaryOffset--;render()">&lt;</button><span class="grow" style="text-align:center;font-weight:700">${dlabel}</span>${diaryOffset!==0?'<button class="btn ghost" onclick="diaryOffset=0;render()">Today</button>':''}<button class="btn ghost" onclick="diaryOffset++;render()">&gt;</button></div>`;
+  h+=`<div class="card"><div class="row"><div>${ringSVG(t.kcal,g.kcal)}</div><div class="grow">
+      ${macroBar("Protein",t.p,g.p)}${macroBar("Carbs",t.c,g.c)}${macroBar("Fat",t.f,g.f)}<div style="font-weight:700;margin-top:6px">Remaining ${fmt(g.kcal-t.kcal)} kcal</div></div></div></div>`;
+  h+=`<div class="card"><div class="row"><div><h3>Water</h3><div class="muted">${fmt(state.water,0)} ml today</div></div>
+      <span class="grow"></span><button class="btn" onclick="state.water+=250;render()">+250 ml</button></div></div>`;
+  MEALS.forEach(m=>{
+    const items=diaryOffset===0?state.entries.filter(e=>e.meal===m):[], k=items.reduce((a,e)=>a+e.kcal,0);
+    h+=`<div class="card"><div class="row"><h3 style="margin:0">${m}</h3><span class="grow"></span>
+        <span class="muted">${fmt(k)} kcal</span>
+        <button class="iconbtn" onclick="openLog({meal:'${m}'})">+</button></div>`;
+    if(!items.length) h+=`<div class="muted small">Nothing logged yet</div>`;
+    items.forEach((e,i)=>{ const idx=state.entries.indexOf(e); h+=`<div class="row" style="padding:6px 0"><div class="grow"><div>${esc(e.name)}</div>
+      <div class="muted small">${fmt(e.grams)} g</div></div>
+      <button class="iconbtn" style="font-size:16px" onclick="adjustEntry(${idx},-1)">-</button><button class="iconbtn" style="font-size:16px" onclick="adjustEntry(${idx},1)">+</button>
+      <span>${fmt(e.kcal)} kcal</span>
+      <button class="iconbtn" style="font-size:14px" onclick="editEntry(${idx})">edit</button>
+      <button class="iconbtn" style="font-size:15px;color:#ff3b30" onclick="state.entries.splice(${idx},1);render()">delete</button></div>`; });
+    h+=`</div>`;
+  });
+  return h;
+}
+function adjustEntry(idx,dir){
+  const e=state.entries[idx]; if(!e||!e.grams) return;
+  const step=e.step||10, ng=Math.max(10, e.grams + dir*step), f=ng/e.grams;
+  e.grams=ng; e.kcal*=f; e.p*=f; e.c*=f; e.f*=f; render();
+}
+function editEntry(idx){
+  const e=state.entries[idx]; if(!e) return;
+  openSheet(`<h3 style="margin:4px 0">Edit: ${esc(e.name)}</h3>
+    <div class="fieldrow"><label>Grams</label><input id="eeG" type="number" value="${fmt(e.grams)}"></div>
+    <div class="fieldrow"><label>Meal</label><select id="eeM">${MEALS.map(m=>`<option${m===e.meal?" selected":""}>${m}</option>`).join("")}</select></div>
+    <div class="row" style="margin-top:10px"><button class="btn ghost grow" onclick="closeSheet()">Cancel</button>
+    <button class="btn grow" onclick="saveEdit(${idx})">Save</button></div>`);
+}
+function saveEdit(idx){
+  const e=state.entries[idx], ng=+document.getElementById("eeG").value||0;
+  if(!e||ng<=0||!e.grams) return;
+  const f=ng/e.grams; e.grams=ng; e.kcal*=f; e.p*=f; e.c*=f; e.f*=f;
+  e.meal=document.getElementById("eeM").value; closeSheet(); render();
+}
+/* ---------- Log sheet ---------- */
+let logSel=null, logGrams=0, logMeal="Snacks", logQuery="";
+function openLog(o){
+  o=o||{}; logQuery=""; logMeal=o.meal||"Snacks";
+  if(o.foodId){ logSel=allFoods().find(f=>f.id===o.foodId); logGrams=logSel.serving; }
+  else { logSel=null; logGrams=0; }
+  paintLog();
+  document.getElementById("sheet").classList.add("open");
+}
+function paintLog(){
+  const q=logQuery.toLowerCase();
+  const list=allFoods().filter(f=>!q||f.name.toLowerCase().includes(q)).slice(0,8);
+  let h=`<h3 style="margin:4px 0 8px">${logSel?esc(logSel.name):"Find food"}</h3>`;
+  if(!logSel){
+    h+=`<input id="lq" placeholder="Search foods" value="${esc(logQuery)}" oninput="logQuery=this.value;paintLogList()">`;
+    h+=`<div id="logList">`+list.map(f=>`<div class="foodrow" onclick="logSel=allFoods().find(x=>x.id==='${f.id}');logGrams=${f.serving};paintLog()">
+      <div class="grow"><div>${esc(f.name)}</div><div class="muted small">${fmt(f.kcal)} kcal / 100 g</div></div>${badge(f)}</div>`).join("")+`</div>`;
+  } else {
+    const k=logGrams/100;
+    h+=`<div class="kv"><span>Meal</span><select id="lm" style="width:150px">
+      ${MEALS.map(m=>`<option${m===logMeal?" selected":""}>${m}</option>`).join("")}</select></div>`;
+    h+=`<div class="kv"><span>Quantity</span><span><button class="btn ghost" onclick="setQty(Math.max(0,(+document.getElementById('lq2').value||0)-1))">-</button> <input id="lq2" type="number" value="${fmt(logGrams/logSel.serving,2)}" style="width:70px;text-align:right" oninput="setQty(+this.value||0)"> <button class="btn ghost" onclick="setQty((+document.getElementById('lq2').value||0)+1)">+</button></span></div>`;
+    h+=`<div class="kv"><span>Weight (g)</span><input id="lg" type="number" value="${fmt(logGrams)}" style="width:110px;text-align:right" oninput="logGrams=+this.value||0;paintLogTotals()"></div>`;
+    h+=`<div class="muted small" style="margin:6px 0">1 serving / piece = ${esc(logSel.servingLabel)} - set quantity OR weight.</div>`;
+    h+=`<div id="logTotals"></div>`;
+    h+=`<div class="row" style="margin-top:10px"><button class="btn ghost grow" onclick="logSel=null;paintLog()">Back</button>
+      <button class="btn grow" onclick="commitLog()">Log</button></div>`;
+  }
+  h+=`<button class="btn ghost" style="width:100%;margin-top:10px" onclick="closeSheet()">Cancel</button>`;
+  document.getElementById("sheetBody").innerHTML=h;
+  const lq=document.getElementById("lq"); if(lq){ lq.focus(); }
+  paintLogTotals();
+}
+function paintLogList(){ paintLogKeep(); }
+function paintLogKeep(){
+  const q=logQuery.toLowerCase();
+  const list=allFoods().filter(f=>!q||f.name.toLowerCase().includes(q)).slice(0,8);
+  const el=document.getElementById("logList"); if(!el) return;
+  el.innerHTML=list.map(f=>`<div class="foodrow" onclick="logSel=allFoods().find(x=>x.id==='${f.id}');logGrams=${f.serving};paintLog()">
+    <div class="grow"><div>${esc(f.name)}</div><div class="muted small">${fmt(f.kcal)} kcal / 100 g</div></div>${badge(f)}</div>`).join("");
+  const lq=document.getElementById("lq"); lq.focus(); lq.setSelectionRange(lq.value.length,lq.value.length);
+}
+function setQty(q){ if(!logSel) return; logGrams=q*logSel.serving; const lg=document.getElementById("lg"); if(lg) lg.value=fmt(logGrams); paintLogTotals(); }
+function paintLogTotals(){
+  const el=document.getElementById("logTotals"); if(!el||!logSel) return;
+  const k=(+logGrams||0)/100;
+  el.innerHTML=`<div class="kv"><span>Energy</span><b>${fmt(logSel.kcal*k)} kcal</b></div>
+    <div class="kv"><span>Protein</span><span>${fmt(logSel.p*k,1)} g</span></div>
+    <div class="kv"><span>Carbs</span><span>${fmt(logSel.c*k,1)} g</span></div>
+    <div class="kv"><span>Fat</span><span>${fmt(logSel.f*k,1)} g</span></div>`;
+}
+function commitLog(){
+  const ms=document.getElementById("lm"); if(ms) logMeal=ms.value;
+  const g=+logGrams||0; if(g<=0||!logSel) return;
+  const k=g/100;
+  state.entries.push({name:logSel.name, grams:g, meal:logMeal, step:logSel.serving,
+    kcal:logSel.kcal*k, p:logSel.p*k, c:logSel.c*k, f:logSel.f*k});
+  closeSheet(); render();
+}
+/* ---------- Foods ---------- */
+let foodQuery="";
+function vFoods(){
+  const q=foodQuery.toLowerCase();
+  const res=allFoods().filter(f=>!q||f.name.toLowerCase().includes(q));
+  let h=`<h1>Foods</h1><div class="card"><h3>Barcode</h3><div class="row">
+    <input id="bc" inputmode="numeric" placeholder="Enter barcode" class="grow"><button class="btn" onclick="findBarcode()">Find</button></div>
+    <div id="bcMsg" class="muted small" style="margin-top:6px"></div></div>`;
+  if(!q){ const seen=new Set(), rec=[];
+    for(const e of [...state.entries].reverse()){ const f=allFoods().find(x=>x.name===e.name); if(f&&!seen.has(f.id)){ seen.add(f.id); rec.push(f); if(rec.length>=5) break; } }
+    if(rec.length) h+=`<div class="card"><h3>Recent</h3>${rec.map(f=>`<div class="foodrow" onclick="foodDetail('${f.id}')"><div class="grow"><div>${esc(f.name)}</div><div class="muted small">${fmt(f.kcal)} kcal / 100 g · ${esc(f.src)}</div></div>${badge(f)}</div>`).join("")}</div>`; }
+  h+=`<div class="card"><h3>Foods &amp; recipes</h3><input placeholder="Search foods" value="${esc(foodQuery)}"
+    oninput="foodQuery=this.value;renderKeepFocus(this)">
+    ${res.length?res.map(f=>`<div class="foodrow" onclick="foodDetail('${f.id}')">
+      <div class="grow"><div>${esc(f.name)}</div><div class="muted small">${fmt(f.kcal)} kcal / 100 g · ${esc(f.src)}</div></div>${badge(f)}</div>`).join(""):'<div class="muted" style="margin:8px 0">No match in the dictionary.</div><div class="row"><button class="btn grow" onclick="customFood(\'\')">Add this food</button><button class="btn ghost grow" onclick="openRecipeBuilder()">Create a recipe</button></div>'}
+    ${allRecipes().map(r=>`<div class="foodrow" onclick="foodDetail('${r.id}')"><div class="grow"><div>${esc(r.name)} (recipe)</div><div class="muted small">${fmt(r.kcal)} kcal / 100 g · Your recipe</div></div><span class="badge estimate">Recipe</span></div>`).join("")}
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="openRecipeBuilder()">+ New recipe</button>
+    </div>`;
+  return h;
+}
+function renderKeepFocus(el){ const v=el.value, pos=el.selectionStart; foodQuery=v; render();
+  const n=document.querySelector('#screen input[placeholder="Search foods"]');
+  if(n){ n.focus(); n.setSelectionRange(pos,pos); } }
+function foodDetail(id){
+  const f=allFoods().find(x=>x.id===id); if(!f) return;
+  openSheet(`<h3 style="margin:4px 0">${esc(f.name)}</h3><div>${badge(f)} <span class="muted small">${esc(f.src)}</span></div>
+    <div style="margin:10px 0"><div class="kv"><span>Per serving (${esc(f.servingLabel)})</span><b>${fmt(f.kcal*f.serving/100)} kcal</b></div>
+    <div class="kv"><span>Protein / 100 g</span><span>${fmt(f.p,1)} g</span></div>
+    <div class="kv"><span>Carbs / 100 g</span><span>${fmt(f.c,1)} g</span></div>
+    <div class="kv"><span>Fat / 100 g</span><span>${fmt(f.f,1)} g</span></div></div>
+    <button class="btn" style="width:100%" onclick="closeSheet();openLog({foodId:'${f.id}',meal:'Snacks'})">Log this food</button>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="closeSheet()">Close</button>`);
+}
+function findBarcode(){
+  const c=(document.getElementById("bc").value||"").trim();
+  const el=document.getElementById("bcMsg"); if(!c) return;
+  const hit=allFoods().find(f=>f.barcode===c);
+  if(hit){ foodDetail(hit.id); }
+  else { el.innerHTML=`No match for ${esc(c)}. <a href="#" onclick="customFood('${esc(c)}');return false">Create this food</a> — it saves to your foods and backup.`; }
+}
+function customFood(code){
+  openSheet(`<h3 style="margin:4px 0">New food</h3>
+    <div class="fieldrow"><label>Name</label><input id="cfN" placeholder="Required"></div>
+    <div class="fieldrow"><label>kcal / 100 g</label><input id="cfK" type="number" placeholder="Required"></div>
+    <div class="fieldrow"><label>Protein g</label><input id="cfP" type="number" value="0"></div>
+    <div class="fieldrow"><label>Carbs g</label><input id="cfC" type="number" value="0"></div>
+    <div class="fieldrow"><label>Fat g</label><input id="cfF" type="number" value="0"></div>
+    <div class="row" style="margin-top:10px"><button class="btn ghost grow" onclick="closeSheet()">Cancel</button>
+    <button class="btn grow" onclick="saveCustom('${esc(code)}')">Save</button></div>`);
+}
+let rb=null;
+function openRecipeBuilder(){
+  rb={name:"", servings:2, items:[]};
+  openSheet(`<h3 style="margin:4px 0">New recipe</h3>
+    <div class="fieldrow"><label>Name</label><input id="rbN" placeholder="Required"></div>
+    <div class="fieldrow"><label>Servings</label><input id="rbS" type="number" value="2"></div>
+    <div class="fieldrow"><label>Ingredient</label><select id="rbF">${allFoods().map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join("")}</select></div>
+    <div class="fieldrow"><label>Grams</label><input id="rbG" type="number" value="100"></div>
+    <div id="rbList" class="muted small"></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost grow" onclick="rbAdd()">Add ingredient</button><button class="btn grow" onclick="rbSave()">Save recipe</button></div>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+}
+function rbAdd(){
+  const f=allFoods().find(x=>x.id===document.getElementById("rbF").value);
+  const g=+document.getElementById("rbG").value||0; if(!f||g<=0) return;
+  rb.items.push({food:f, grams:g});
+  document.getElementById("rbList").innerHTML=rb.items.map(i=>`${esc(i.food.name)} - ${fmt(i.grams)} g`).join("<br>");
+}
+function rbSave(){
+  const name=(document.getElementById("rbN").value||"").trim();
+  const servings=+document.getElementById("rbS").value||1;
+  if(!name||!rb.items.length||servings<=0) return;
+  const tg=rb.items.reduce((a,i)=>a+i.grams,0), perG=tg/servings;
+  const tot=rb.items.reduce((a,i)=>{const k=i.grams/100; return {kcal:a.kcal+i.food.kcal*k,p:a.p+i.food.p*k,c:a.c+i.food.c*k,f:a.f+i.food.f*k};},{kcal:0,p:0,c:0,f:0});
+  const s100=100/perG;
+  state.recipes.push({id:"r"+Date.now(), name:name, kcal:tot.kcal*s100, p:tot.p*s100, c:tot.c*s100, f:tot.f*s100, serving:perG, servingLabel:"1 serving ("+fmt(perG)+" g)", src:"Your recipe", v:false, tags:["recipe"]});
+  closeSheet(); render();
+}
+function saveCustom(code){
+  const n=(document.getElementById("cfN").value||"").trim(), k=+document.getElementById("cfK").value||0;
+  if(!n||k<=0){ return; }
+  state.customs.push({id:"c"+Date.now(), name:n, kcal:k, p:+document.getElementById("cfP").value||0,
+    c:+document.getElementById("cfC").value||0, f:+document.getElementById("cfF").value||0,
+    serving:100, servingLabel:"1 serving (100 g)", src:"Your entry", v:false, barcode:code||undefined, tags:["custom"]});
+  closeSheet(); render();
+}
+/* ---------- Workouts ---------- */
+let live=null, restLeft=0, restTimer=null;
+function vWorkouts(){
+  const wd=(new Date().getDay()+6)%7+1, planIdx=(state.weekPlan||{})[wd], plan=planIdx!==undefined&&planIdx!==null?ROUTINES[planIdx]:null;
+  const last=plan?state.sessions.slice().reverse().find(s=>s.name===plan.name):null;
+  let h=`<h1>Workouts</h1><div class="card"><h3>Today</h3>`;
+  if(plan){
+    h+=`<div><b>${esc(plan.muscle)}</b> - ${esc(plan.name)}</div>`+plan.items.map(([n,t])=>{
+      const lp=last&&last.exData?last.exData.find(e=>e.name===n):null;
+      return `<div class="kv"><span>${esc(n)}</span><span>${t} sets${lp?(" - last: "+fmt(lp.kg)+" kg x "+fmt(lp.reps)):""}</span></div>`;}).join("")
+      +`<button class="btn" style="width:100%;margin-top:8px" onclick="startLive(${planIdx})">Start today's workout</button>`;
+  } else h+=`<div class="muted small">Rest day - no workout planned for today.</div>`;
+  h+=`<h3 style="margin-top:14px">Weekly plan</h3>`+["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d,i)=>{
+    const cur=(state.weekPlan||{})[i+1];
+    return `<div class="fieldrow"><label>${d}</label><select onchange="state.weekPlan[${i+1}]=this.value==='rest'?null:+this.value;render()"><option value="rest"${cur===null||cur===undefined?" selected":""}>Rest</option>${ROUTINES.map((r,ri)=>`<option value="${ri}"${cur===ri?" selected":""}>${esc(r.name)} (${esc(r.muscle)})</option>`).join("")}</select></div>`;}).join("")+`</div>`;
+  h+=`<div class="card"><button class="btn" style="width:100%" onclick="startLive(null)">+ Start empty workout (add any exercise)</button></div>`;
+  h+=`<div class="card"><h3>Routines</h3>`+ROUTINES.map((r,i)=>`<div class="row" style="padding:8px 0">
+    <div class="grow"><div><b>${esc(r.name)}</b></div><div class="muted small">${r.items.length} exercises</div></div>
+    <button class="btn ghost" onclick="startLive(${i})">Start</button></div>`).join("")+`</div>`;
+  h+=`<div class="card"><h3>History</h3>`;
+  if(!state.sessions.length) h+=`<div class="muted small">No workouts yet — finish one to see it here.</div>`;
+  state.sessions.slice().reverse().forEach(s=>{ h+=`<div class="kv"><span>${esc(s.name)}</span><span class="muted">${fmt(s.vol,0)} kg · ${s.sets} sets</span></div>`; });
+  return h+`</div>`;
+}
+function startLive(i){
+  const r=i===null?{name:"Workout",items:[]}:ROUTINES[i];
+  live={name:r.name, ex:r.items.map(([n,t])=>({name:n, sets:Array.from({length:Math.min(t,3)},()=>({reps:8,kg:20}))}))};
+  render();
+}
+function vLive(){
+  let h=`<h1>${esc(live.name)}</h1>`;
+  h+=`<div class="card"><div class="row"><div class="grow"><h3 style="margin:0">Rest</h3>
+    <div class="muted">${restLeft>0?restLeft+"s left":"ready"}</div></div>
+    ${[60,90,180].map(s=>`<button class="btn ghost" onclick="startRest(${s})">${s/60}${s%60?"":".0"}m</button>`).join("")}
+    ${restLeft>0?'<button class="btn ghost" onclick="stopRest()">Stop</button>':""}</div></div>`;
+  live.ex.forEach((e,ei)=>{
+    h+=`<div class="card"><h3>${esc(e.name)}</h3>`;
+    e.sets.forEach((s,si)=>{
+      h+=`<div class="row" style="padding:4px 0"><span class="muted small" style="width:28px">${si+1}</span>
+        <input type="number" value="${s.reps}" style="width:64px" onchange="live.ex[${ei}].sets[${si}].reps=+this.value||0">
+        <span class="muted">×</span>
+        <input type="number" value="${s.kg}" style="width:74px" onchange="live.ex[${ei}].sets[${si}].kg=+this.value||0">
+        <span class="muted small">kg</span><span class="grow"></span>
+        <span class="muted small">${fmt(s.reps*s.kg,0)} kg</span></div>`;
+    });
+    h+=`<button class="btn ghost" style="margin-top:6px" onclick="live.ex[${ei}].sets.push({reps:8,kg:20});render()">+ Add set</button></div>`;
+  });
+  h+=`<button class="btn" style="width:100%" onclick="finishLive()">Finish workout</button>
+      <button class="btn ghost" style="width:100%;margin-top:8px" onclick="live=null;stopRest();render()">Discard</button>`;
+  return h;
+}
+function startRest(s){ stopRest(); restLeft=s; restTimer=setInterval(()=>{ restLeft--; if(restLeft<=0){ stopRest(); } render(); },1000); render(); }
+function stopRest(){ if(restTimer) clearInterval(restTimer); restTimer=null; restLeft=0; }
+function finishLive(){
+  const sets=live.ex.reduce((a,e)=>a+e.sets.length,0);
+  const vol=live.ex.reduce((a,e)=>a+e.sets.reduce((x,s)=>x+s.reps*s.kg,0),0);
+  state.sessions.push({name:live.name, vol:vol, sets:sets, exData:live.ex.map(e=>({name:e.name, reps:e.sets[0]?e.sets[0].reps:0, kg:e.sets[0]?e.sets[0].kg:0})), burnW:Math.round(5*state.weightKg*(sets*3)/60), burnC:0, when:Date.now()});
+  const msg=`${fmt(vol,0)} kg volume · ${sets} sets`+(vol>0?" — saved to history":"");
+  live=null; stopRest(); render();
+  openSheet(`<h3 style="margin:4px 0">Workout complete</h3><p>${msg}</p>
+    <button class="btn" style="width:100%" onclick="closeSheet()">Done</button>`);
+}
+/* ---------- Progress ---------- */
+const SAMPLE7=[1850,2100,1750,2050,2200,1900];
+function vProgress(){
+  const t=totals(), days=SAMPLE7.concat([t.kcal]), max=Math.max(2200,state.goal.kcal);
+  let h=`<h1>Progress</h1><div class="card"><h3>Calories vs target · 7 days</h3><div class="row" style="align-items:flex-end">`;
+  days.forEach((v,i)=>{ h+=`<div class="daybar"><div class="col"><div class="fill" style="height:${Math.max(v/max*100,3)}%;${i===6?"background:#34c759":""}"></div></div>
+    <span class="muted small">${"MTWTFSS"[((new Date().getDay()+7+i)%7)]}</span></div>`; });
+  h+=`</div><div class="muted small">Target ${fmt(state.goal.kcal)} kcal · green = today</div></div>`;
+  h+=`<div class="card"><div class="row"><div class="grow"><h3 style="margin:0">Weight</h3><div class="muted">65.0 kg · steady</div></div>
+    <button class="btn" onclick="state.weights=(state.weights||[]).concat([65]);render()">Log 65.0 kg</button></div></div>`;
+  h+=`<div class="card"><h3>Personal records</h3>
+    <div class="kv"><span class="pr">Bench press</span><span>60 kg</span></div>
+    <div class="kv"><span class="pr">Squat</span><span>80 kg</span></div>
+    <div class="kv"><span class="pr">Deadlift</span><span>100 kg</span></div></div>`;
+  return h;
+}
+/* ---------- Settings ---------- */
+function vSettings(){
+  const g=state.goal;
+  return `<h1>Settings</h1>
+  <div class="card"><h3>Goals</h3><div class="kv"><span>Calories</span><b>${fmt(g.kcal)} kcal</b></div>
+    <div class="kv"><span>Protein</span><span>${fmt(g.p)} g</span></div>
+    <div class="kv"><span>Carbs</span><span>${fmt(g.c)} g</span></div>
+    <div class="kv"><span>Fat</span><span>${fmt(g.f)} g</span></div>
+    <div class="kv"><span>Estimated time</span><span>${estDays(state)} days</span></div>
+    <div class="fieldrow"><label>Name</label><input id="sgN" value="${esc(state.name||"")}"></div>
+    <div class="fieldrow"><label>Current kg</label><input id="sgW" type="number" value="${fmt(state.weightKg,1)}"></div>
+    <div class="fieldrow"><label>Target kg</label><input id="sgT" type="number" value="${fmt(state.targetWeightKg,1)}"></div>
+    <div class="fieldrow"><label>Pace</label><select id="sgP"><option value="0.25"${state.weeklyKg===0.25?" selected":""}>Gentle 0.25/wk</option><option value="0.5"${state.weeklyKg===0.5?" selected":""}>Steady 0.5/wk</option><option value="0.75"${state.weeklyKg===0.75?" selected":""}>Faster 0.75/wk</option><option value="1"${state.weeklyKg===1?" selected":""}>Aggressive 1.0/wk</option></select></div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="saveSettings()">Save target</button></div>
+  <div class="card"><h3>Apple Health</h3><div class="muted small">Read-only in the real app. Connect, allow Weight / Body Fat / Nutrition / Workouts, then Sync now. HealthU+ readings arrive via Apple Health.</div>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="alert('Mockup only: on iPhone this opens the Health permission sheet.')">Connect Apple Health (mock)</button></div>
+  <div class="card"><h3>Backup &amp; restore</h3>
+    <div class="row"><button class="btn grow" onclick="exportJSON()">Export backup</button></div>
+    <div class="row" style="margin-top:8px"><label class="btn ghost grow" style="text-align:center">Import backup<input type="file" accept=".json" class="hidden" onchange="importJSON(this)"></label></div>
+    <div class="muted small" style="margin-top:8px">One file holds everything. Delete the app, reinstall, import — identical data back.</div></div>
+  <div class="card"><h3>About</h3><div class="muted small">Mockup of the local-only build. No account, no network.
+    Food data: USDA (public domain) + Open Food Facts (ODbL) + curated estimates, marked in-app.</div></div>
+  <button class="btn danger" style="width:100%" onclick="if(confirm('Delete everything in this mockup?')){state=freshState();ob={step:0,name:'',sex:'female',age:30,heightCm:165,weightKg:65,activity:'moderate',targetWeightKg:60,weeklyKg:0.5,synced:false};render()}">Delete all my data</button>`;
+}
+function saveSettings(){
+  state.name=(document.getElementById("sgN").value||"").trim();
+  state.weightKg=+document.getElementById("sgW").value||state.weightKg;
+  state.targetWeightKg=+document.getElementById("sgT").value||state.targetWeightKg;
+  state.weeklyKg=+document.getElementById("sgP").value||0.5;
+  const g=computeGoal(state); state.goal={kcal:g.kcal,p:g.p,c:g.c,f:g.f};
+  render();
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({schemaVersion:1,exportedAt:new Date().toISOString(),body:state},null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="healthify-mockup-backup.json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+function importJSON(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.body&&d.body.entries){ const o=state.onboarded; state=Object.assign(freshState(),d.body); state.onboarded=o; render(); } }
+    catch(e){ /* corrupt file: leave data untouched, like the app */ } };
+  r.readAsText(f); input.value="";
+}
+/* ---------- Boot ---------- */
+let ob={step:0,name:"",sex:"female",age:30,heightCm:165,weightKg:65,activity:"moderate",targetWeightKg:60,weeklyKg:0.5,synced:false};
+function obDraft(){ return {name:ob.name,sex:ob.sex,age:ob.age,heightCm:ob.heightCm,weightKg:ob.weightKg,targetWeightKg:ob.targetWeightKg,weeklyKg:ob.weeklyKg,activity:ob.activity}; }
+function vOnboard(){
+  const d=obDraft(), g=computeGoal(d), dots=[0,1,2,3].map(i=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:${i===ob.step?"#007aff":"#d1d1d6"}"></span>`).join("");
+  let h=`<div style="padding:24px 8px"><div style="margin-bottom:14px">${dots}</div>`;
+  if(ob.step===0){
+    h+=`<h1>Welcome</h1><p class="muted">Local-only diet + gym tracker. No login, everything stays on this phone.</p>
+    <div class="card"><h3>Your name</h3><input id="obN" placeholder="Name (required)" value="${esc(ob.name)}" oninput="ob.name=this.value"></div>
+    <button class="btn" style="width:100%" onclick="ob.name=(document.getElementById('obN').value||'').trim(); if(ob.name){ob.step=1;render()}">Continue</button>`;
+  } else if(ob.step===1){
+    h+=`<h1>Weight &amp; height</h1>
+    <div class="card"><button class="btn" style="width:100%" onclick="ob.heightCm=172;ob.weightKg=72.5;ob.synced=true;render()">${ob.synced?"Synced from HealthU+ via Apple Health":"Sync from Apple Health / HealthU+"}</button>
+    <p class="muted small">Mock sync fills 72.5 kg / 172 cm. Or type your numbers below.</p>
+    <div class="fieldrow"><label>Sex</label><select onchange="ob.sex=this.value"><option value="female"${ob.sex==="female"?" selected":""}>Female</option><option value="male"${ob.sex==="male"?" selected":""}>Male</option></select></div>
+    <div class="fieldrow"><label>Age</label><input type="number" value="${ob.age}" onchange="ob.age=+this.value||30"></div>
+    <div class="fieldrow"><label>Height cm</label><input type="number" value="${fmt(ob.heightCm)}" onchange="ob.heightCm=+this.value||0"></div>
+    <div class="fieldrow"><label>Weight kg</label><input type="number" value="${fmt(ob.weightKg,1)}" onchange="ob.weightKg=+this.value||0"></div>
+    <div class="fieldrow"><label>Activity</label><select onchange="ob.activity=this.value">${["sedentary","light","moderate","active","veryActive"].map(a=>`<option value="${a}"${ob.activity===a?" selected":""}>${a}</option>`).join("")}</select></div></div>
+    <div class="row"><button class="btn ghost grow" onclick="ob.step=0;render()">Back</button><button class="btn grow" onclick="if(ob.heightCm>0&&ob.weightKg>0){ob.step=2;render()}">Continue</button></div>`;
+  } else if(ob.step===2){
+    h+=`<h1>Your target</h1><div class="card">
+    <div class="fieldrow"><label>Target kg</label><input type="number" value="${fmt(ob.targetWeightKg,1)}" onchange="ob.targetWeightKg=+this.value||0;render()"></div>
+    <div class="muted small">${g.dir==="lose"?("Lose "+fmt(ob.weightKg-ob.targetWeightKg,1)+" kg"):g.dir==="gain"?("Gain "+fmt(ob.targetWeightKg-ob.weightKg,1)+" kg"):"Maintain"}</div>
+    <div class="fieldrow"><label>Pace</label><select onchange="ob.weeklyKg=+this.value;render()"><option value="0.25"${ob.weeklyKg===0.25?" selected":""}>Gentle 0.25/wk</option><option value="0.5"${ob.weeklyKg===0.5?" selected":""}>Steady 0.5/wk</option><option value="0.75"${ob.weeklyKg===0.75?" selected":""}>Faster 0.75/wk</option><option value="1"${ob.weeklyKg===1?" selected":""}>Aggressive 1.0/wk</option></select></div>
+    <div class="kv"><span>Daily calories</span><b>${fmt(g.kcal)} kcal</b></div><div class="kv"><span>Protein</span><span>${fmt(g.p)} g</span></div><div class="kv"><span>Carbs</span><span>${fmt(g.c)} g</span></div><div class="kv"><span>Fat</span><span>${fmt(g.f)} g</span></div><div class="kv"><span>Estimated time</span><span>${estDays(d)} days (~${fmt(estDays(d)/7,1)} weeks)</span></div></div>
+    <div class="row"><button class="btn ghost grow" onclick="ob.step=1;render()">Back</button><button class="btn grow" onclick="if(ob.targetWeightKg>0){ob.step=3;render()}">Continue</button></div>`;
+  } else {
+    h+=`<h1>Ready, ${esc(ob.name)}?</h1><div class="card">
+    <div class="kv"><span>Now</span><span>${fmt(ob.weightKg,1)} kg</span></div><div class="kv"><span>Target</span><span>${fmt(ob.targetWeightKg,1)} kg</span></div>
+    <div class="kv"><span>Pace</span><span>${fmt(ob.weeklyKg,2)} kg / week</span></div><div class="kv"><span>Daily calories</span><b>${fmt(g.kcal)} kcal</b></div></div>
+    <div class="row"><button class="btn ghost grow" onclick="ob.step=2;render()">Back</button><button class="btn grow" onclick="obStart()">Start tracking</button></div>
+    <p class="muted small">General wellness guidance only. Change the target anytime in Settings.</p>`;
+  }
+  return h+`</div>`;
+}
+function obStart(){
+  const d=obDraft(), g=computeGoal(d);
+  Object.assign(state,d); state.goal={kcal:g.kcal,p:g.p,c:g.c,f:g.f}; state.onboarded=true; tab="home"; render();
+}
+function render(){
+  renderTabs();
+  document.getElementById("tabbar").style.display = state.onboarded ? "flex" : "none";
+  const scr=document.getElementById("screen");
+  if(!state.onboarded){ scr.innerHTML=vOnboard(); return; }
+  if(live && tab==="workouts"){ scr.innerHTML=vLive(); return; }
+  scr.innerHTML = tab==="home"?vHome() : tab==="diary"?vDiary() : tab==="foods"?vFoods() : tab==="workouts"?vWorkouts() : tab==="progress"?vProgress() : vSettings();
+}
+state=freshState();
+/* Deep-link for preview/testing: #home, #diary, #foods, #workouts, #progress, #settings */
+(function(){ const m=/^#(home|diary|foods|workouts|progress|settings)$/.exec(location.hash);
+  if(m){ tab=m[1]; state.onboarded=true; } })();
+render();
+</script>
+</body>
+</html>

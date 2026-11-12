@@ -1,0 +1,5 @@
+.build/
+FudAI-full/
+*.deb
+.DS_Store
+xcuserdata/

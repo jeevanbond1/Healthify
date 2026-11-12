@@ -1,0 +1,68 @@
+name: Build unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Sources/**"
+      - "Package.swift"
+      - "Healthify-Info.plist"
+      - ".github/workflows/ipa.yml"
+
+jobs:
+  build-ipa:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build Healthify (unsigned, generic iOS device)
+        run: |
+          xcodebuild \
+            -scheme Healthify \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -derivedDataPath "$RUNNER_TEMP/DD" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Assemble unsigned IPA
+        run: |
+          BIN="$RUNNER_TEMP/DD/Build/Products/Release-iphoneos/Healthify"
+          test -f "$BIN"
+          rm -rf Payload Healthify-unsigned.ipa
+          mkdir -p Payload/Healthify.app
+          cp "$BIN" Payload/Healthify.app/Healthify
+          python3 - <<'PY'
+          import plistlib
+          info = {
+              "CFBundleExecutable": "Healthify",
+              "CFBundleIdentifier": "com.healthify.app",
+              "CFBundleName": "Healthify",
+              "CFBundleDisplayName": "Healthify",
+              "CFBundleShortVersionString": "1.0",
+              "CFBundleVersion": "1",
+              "CFBundlePackageType": "APPL",
+              "CFBundleInfoDictionaryVersion": "6.0",
+              "LSRequiresIPhoneOS": True,
+              "UIDeviceFamily": [1],
+              "MinimumOSVersion": "17.0",
+          }
+          with open("Healthify-Info.plist", "rb") as f:
+              info.update(plistlib.load(f))
+          with open("Payload/Healthify.app/Info.plist", "wb") as f:
+              plistlib.dump(info, f)
+          print("Info.plist written")
+          PY
+          zip -qry Healthify-unsigned.ipa Payload
+          ls -lh Healthify-unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Healthify-unsigned-ipa
+          path: Healthify-unsigned.ipa
+          retention-days: 14
