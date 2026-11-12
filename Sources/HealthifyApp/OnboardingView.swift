@@ -43,7 +43,7 @@ struct OnboardingView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                ProgressView(value: Double(step + 1) / 4)
+                SwiftUI.ProgressView(value: Double(step + 1) / 4)
                     .padding(.horizontal)
                 Group {
                     switch step {

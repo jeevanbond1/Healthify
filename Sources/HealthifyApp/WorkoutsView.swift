@@ -87,14 +87,10 @@ struct WorkoutsView: View {
                     }
                 }
                 Section("History") {
-                    ForEach(store.sessions.sorted { $0.startedAt > $1.startedAt }) { s in
+                    ForEach(sortedSessions) { s in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(s.routineName ?? "Workout")
-                            Text("\(dayString(s.startedAt)) · "
-                                + "\(fmt(s.volume, 0)) kg volume · "
-                                + "\(s.entries.reduce(0) { $0 + $1.sets.count }) sets"
-                                + (s.activeEnergyKcal.map { " · \(fmt($0, 0)) kcal" } ?? "")
-                                + (s.source.map { " · \($0)" } ?? ""))
+                            Text(historySubtitle(s))
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         .swipeActions(edge: .trailing) {
@@ -123,6 +119,18 @@ struct WorkoutsView: View {
                     }
                 }
         }
+    }
+
+    private var sortedSessions: [WorkoutSession] {
+        store.sessions.sorted { $0.startedAt > $1.startedAt }
+    }
+
+    private func historySubtitle(_ s: WorkoutSession) -> String {
+        var text = "\(dayString(s.startedAt)) · \(fmt(s.volume, 0)) kg volume"
+        text += " · \(s.entries.reduce(0) { $0 + $1.sets.count }) sets"
+        if let kcal = s.activeEnergyKcal { text += " · \(fmt(kcal, 0)) kcal" }
+        if let source = s.source { text += " · \(source)" }
+        return text
     }
 
     private func todayTargetText(_ item: RoutineItem) -> String {
